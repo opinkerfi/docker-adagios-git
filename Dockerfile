@@ -42,8 +42,10 @@ RUN mkdir /etc/nagios/disabled
 RUN mv /etc/nagios/{nagios,cgi}.cfg /etc/nagios/disabled/
 
 WORKDIR /~
-RUN git clone git://github.com/pynag/pynag.git
-RUN ./pynag/setup.py install
+RUN git clone git://github.com/pynag/pynag.git /tmp/pynag
+WORKDIR /tmp/pynag
+RUN /tmp/pynag/setup.py build
+RUN /tmp/pynag/setup.py install
 
 git clone git://github.com/opinkerfi/adagios.git
 WORKDIR adagios/adagios
