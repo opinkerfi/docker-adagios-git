@@ -125,6 +125,9 @@ RUN pynag config --append cfg_dir=/etc/naemon/commands/
 
 RUN mv /etc/httpd/conf.d/thruk_cookie_auth_vhost.conf /etc/httpd/conf.d/thruk_cookie_auth_vhost.conf.disabled
 
+# Redirect root URL to /adagios
+RUN echo "RedirectMatch ^/$ /adagios" > /etc/httpd/conf.d/redirect.conf
+
 # Install supervisor and supervisor-quick. Service restarts are painfully slow
 # otherwise
 RUN pip install supervisor
