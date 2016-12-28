@@ -23,6 +23,8 @@ RUN yum clean all && yum -y update
 # Install naemon, adagios and other needed packages
 RUN yum install -y naemon naemon-livestatus git acl pnp4nagios python-setuptools postfix python-pip
 RUN yum install -y Django python-simplejson
+RUN yum-config-manager --enable ok-testing -y
+RUN yum install -y okconfig
 
 # Now all the packages have been installed, and we need to do a little bit of
 # configuration before we start doing awesome monitoring
@@ -55,6 +57,9 @@ RUN chown -R naemon:naemon /etc/adagios
 RUN chmod g+w -R /etc/adagios
 RUN mkdir /var/lib/adagios
 RUN chown naemon:naemon /var/lib/adagios
+RUN cp -r apache/* /etc/httpd/conf.d/
+RUN mkdir /etc/sudoers.d
+RUN cp etc/sudoers.d/adagios /etc/sudoers.d/adagios
 
 # Make objects created by adagios go to /etc/naemon/adagios
 RUN mkdir -p /etc/naemon/adagios
