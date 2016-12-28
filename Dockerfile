@@ -47,7 +47,8 @@ WORKDIR /tmp/pynag
 RUN /tmp/pynag/setup.py build
 RUN /tmp/pynag/setup.py install
 
-git clone git://github.com/opinkerfi/adagios.git
+WORKDIR /~
+RUN git clone git://github.com/opinkerfi/adagios.git
 WORKDIR adagios/adagios
 RUN cp -r etc/adagios /etc/adagios
 RUN chown -R naemon:naemon /etc/adagios
