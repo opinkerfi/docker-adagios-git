@@ -52,18 +52,17 @@ RUN /tmp/pynag/setup.py build
 RUN /tmp/pynag/setup.py install
 
 # Install Adagios from Git
-WORKDIR /~
 RUN git clone git://github.com/opinkerfi/adagios.git /tmp/adagios
 WORKDIR /tmp/adagios
 RUN python /tmp/adagios/setup.py install
-RUN cp -r etc/adagios /etc/adagios
+RUN cp -r adagios/etc/adagios /etc/adagios
 RUN chown -R naemon:naemon /etc/adagios
 RUN chmod g+w -R /etc/adagios
 RUN mkdir /var/lib/adagios
 RUN chown naemon:naemon /var/lib/adagios
-RUN cp -r apache/* /etc/httpd/conf.d/
+RUN cp -r adagios/apache/* /etc/httpd/conf.d/
 RUN mkdir /etc/sudoers.d
-RUN cp etc/sudoers.d/adagios /etc/sudoers.d/adagios
+RUN cp adagios/etc/sudoers.d/adagios /etc/sudoers.d/adagios
 
 # Make objects created by adagios go to /etc/naemon/adagios
 RUN mkdir -p /etc/naemon/adagios
