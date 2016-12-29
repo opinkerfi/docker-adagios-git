@@ -21,6 +21,7 @@ RUN yum install -y epel-release
 RUN yum clean all && yum -y update
 
 # Install naemon, adagios and other needed packages
+RUN yum install -y httpd mod_wsgi
 RUN yum install -y naemon naemon-livestatus git acl pnp4nagios python-setuptools postfix python-pip
 RUN yum install -y Django python-simplejson
 RUN yum-config-manager --enable ok-testing -y
@@ -43,15 +44,18 @@ RUN setfacl -R -m group:naemon:rwx -m d:group:naemon:rwx /etc/naemon/ /var/lib/p
 RUN mkdir /etc/nagios/disabled
 RUN mv /etc/nagios/{nagios,cgi}.cfg /etc/nagios/disabled/
 
+# Install Pynag from Git
 WORKDIR /~
 RUN git clone git://github.com/pynag/pynag.git /tmp/pynag
 WORKDIR /tmp/pynag
 RUN /tmp/pynag/setup.py build
 RUN /tmp/pynag/setup.py install
 
+# Install Adagios from Git
 WORKDIR /~
-RUN git clone git://github.com/opinkerfi/adagios.git
-WORKDIR adagios/adagios
+RUN git clone git://github.com/opinkerfi/adagios.git /tmp/adagios
+WORKDIR /tmp/adagios
+RUN /tmp/adagios/setup.py install
 RUN cp -r etc/adagios /etc/adagios
 RUN chown -R naemon:naemon /etc/adagios
 RUN chmod g+w -R /etc/adagios
