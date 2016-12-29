@@ -55,7 +55,7 @@ RUN /tmp/pynag/setup.py install
 WORKDIR /~
 RUN git clone git://github.com/opinkerfi/adagios.git /tmp/adagios
 WORKDIR /tmp/adagios
-RUN /tmp/adagios/setup.py install
+RUN python /tmp/adagios/setup.py install
 RUN cp -r etc/adagios /etc/adagios
 RUN chown -R naemon:naemon /etc/adagios
 RUN chmod g+w -R /etc/adagios
