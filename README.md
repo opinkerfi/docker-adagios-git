@@ -7,6 +7,7 @@ Docker image for Adagios built from git (Naemon-Adagios)
 [![GitHub release](https://img.shields.io/github/release/opinkerfi/adagios-git.svg)]()
 
 ## Usage
+ 
 
 ```
 docker create \ 
@@ -14,6 +15,8 @@ docker create \
   -p 80:80 \
   opinkerfi/adagios-git
 ```
+
+Log in with user `thrukadmin` and password `thrukadmin`
 
 ## Parameters
 
