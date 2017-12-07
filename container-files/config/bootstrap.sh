@@ -23,7 +23,7 @@ fi
 if test -t 0; then
   # Run supervisord detached...
   supervisord $SUPERVISOR_PARAMS
-  
+
   # Some command(s) has been passed to container? Execute them and exit.
   # No commands provided? Run bash.
   if [[ $@ ]]; then 

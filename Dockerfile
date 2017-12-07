@@ -11,9 +11,7 @@ RUN \
   yum install -y epel-release && \
   yum install -y iproute python-setuptools hostname inotify-tools yum-utils which jq && \
   yum clean all && \
-
   easy_install supervisor
-
 
 ENV ADAGIOS_HOST adagios.local
 ENV ADAGIOS_USER thrukadmin
@@ -30,7 +28,7 @@ RUN yum clean all && yum -y update
 # Install Deps          
 #
 RUN yum install -y git acl libstdc++-static python-setuptools facter mod_wsgi postfix python-pip sudo
-
+RUN pip install --upgrade pip
 
 # Install Nagios 4
 #
@@ -48,7 +46,7 @@ RUN systemctl enable httpd
 #
 RUN yum install -y check-mk-livestatus
 # Add check_mk livestatus broker module to nagios config
-RUN echo "broker_module=/usr/lib64/check_mk/livestatus.o /var/spool/nagios/cmd/livestatus" >> /etc/nagios/nagios.cfg
+RUN echo "broker_module=/usr/lib64/check_mk/livestatus.o /var/spool/nagios/cmd/livestatus debug=1" >> /etc/nagios/nagios.cfg
 
 # Lets make sure adagios can write to nagios configuration files, and that
 # it is a valid git repo so we have audit trail
@@ -84,19 +82,22 @@ RUN mkdir /etc/nagios/adagios
 RUN mkdir -p /etc/nagios/adagios /etc/nagios/commands
 RUN echo "cfg_dir=/etc/nagios/adagios" >> /etc/nagios/nagios.cfg
 RUN echo "cfg_dir=/etc/nagios/commands" >> /etc/nagios/nagios.cfg
+RUN sed -i 's|debug_level=0|debug_level=1|g' /etc/nagios/nagios.cfg
 
 # Add naemon to apache group so it has permissions to pnp4nagios's session files
 RUN usermod -G apache nagios
 
-#RUN sed -i 's|^\(nagios_init_script\)=\(.*\)$|\1="sudo /usr/bin/nagios-supervisor-wrapper.sh"|g' /etc/adagios/adagios.conf
-#RUN echo "nagios ALL=NOPASSWD: /usr/bin/nagios-supervisor-wrapper.sh" >> /etc/sudoers.d/adagios
+RUN sed -i 's|^\(nagios_init_script\)=\(.*\)$|\1="sudo /usr/bin/nagios-supervisor-wrapper.sh"|g' /etc/adagios/adagios.conf
+RUN echo "nagios ALL=NOPASSWD: /usr/bin/nagios-supervisor-wrapper.sh" >> /etc/sudoers.d/adagios
+
+# Redirect / to /adagios
+RUN echo "RedirectMatch ^/$ /adagios" > /etc/httpd/conf.d/redirect.conf
 
 # Add supervisord conf, bootstrap.sh files
 ADD container-files /
 ADD supervisord-nagios.conf /etc/supervisor.d/supervisord-nagios.conf
 
 EXPOSE 80
-EXPOSE 8000
 VOLUME ["/data", "/etc/nagios", "/var/log/nagios", "/etc/adagios", "/opt/adagios", "/opt/pynag"]
 
 ENTRYPOINT ["/config/bootstrap.sh"]
