@@ -34,3 +34,39 @@ To access Adagios
 :80/adagios
 To access Nagios 4 UI
 :80/nagios
+
+## Local development of Adagios with adagios-git docker image
+
+Via docker run command
+
+```SHELL
+docker run -it -p 8080:80 -p 8000:8000 -v ~/code/test/adagios:/opt/adagios -v ~/code/test/pynag:/opt/pynag --name adagios opinkerfi/adagios-git:latest
+```
+Via docker-compose
+
+```SHELL
+docker-compose up
+```
+where the contents of docker-compose.yml is similar to the example provided
+
+```YAML
+version: '3.1'
+
+services:
+  adagios_dev:
+    image: opinkerfi/adagios-git:latest
+    ports:
+      - 8080:80
+      - 8000:8000
+    volumes:
+      - adagios:/opt/adagios
+      - pynag:/opt/pynag
+
+volumes:
+  adagios:
+  pynag:
+
+```
+
+
+
