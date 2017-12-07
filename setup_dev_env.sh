@@ -10,10 +10,17 @@ if [ ! -d pynag ]; then
   git clone git://github.com/pynag/pynag.git pynag
 fi
 
-if [ -f docker-compose.yml ]; then
-  read -sn 1 -p "Do you want me to start the docker instance via docker-compose (y|n) ?"
+if [ ! -f docker-compose.yml ]; then
+  read -sn 1 -p "Do you want me to fetch docker-compose.yml (y|n)? "
   if [ $REPLY == "y" ]; then
-    docker-compose start
+    curl https://raw.githubusercontent.com/opinkerfi/docker-adagios-git/master/docker-compose.yml > docker-compose.yml
+  fi
+fi
+
+if [ -f docker-compose.yml ]; then
+  read -sn 1 -p "Do you want me to start the docker instance via docker-compose (y|n)? "
+  if [ $REPLY == "y" ]; then
+    docker-compose up
   fi
 fi
 

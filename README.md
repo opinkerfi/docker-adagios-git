@@ -37,12 +37,15 @@ To access Nagios 4 UI
 
 ## Local development of Adagios with adagios-git docker image
 
-Via docker run command
+### Via docker run command
 
 ```SHELL
-docker run -it -p 8080:80 -p 8000:8000 -v ~/code/test/adagios:/opt/adagios -v ~/code/test/pynag:/opt/pynag --name adagios opinkerfi/adagios-git:latest
+docker run -it -p 8080:80 -p 8000:8000 \
+-v ~/code/test/adagios:/opt/adagios \
+-v ~/code/test/pynag:/opt/pynag \
+--name adagios opinkerfi/adagios-git:latest
 ```
-Via docker-compose
+### Via docker-compose
 
 ```SHELL
 docker-compose up
@@ -53,7 +56,7 @@ where the contents of docker-compose.yml is similar to the example provided
 version: '3.1'
 
 services:
-  adagios_dev:
+  adagios:
     image: opinkerfi/adagios-git:latest
     ports:
       - 8080:80
@@ -68,5 +71,11 @@ volumes:
 
 ```
 
+### Basic development environment setup via shell script
 
+We have created a small script that you can use to setup the local development environment
 
+```SHELL
+cd ~/my/adagios/env/dev/folder # Folder that you want to keep the code for pynag and adagios
+curl https://raw.githubusercontent.com/opinkerfi/docker-adagios-git/master/setup_dev_env.sh | bash - 
+```
