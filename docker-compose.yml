@@ -9,7 +9,9 @@ services:
     volumes:
       - adagios:/opt/adagios
       - pynag:/opt/pynag
+      - logs:/var/log/nagios
 
 volumes:
   adagios:
   pynag:
+  logs:
