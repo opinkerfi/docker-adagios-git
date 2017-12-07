@@ -1,10 +1,19 @@
-############################################################
-# Dockerfile to build a Naemon/Adagios server
-# Based on appcontainers/nagios
-############################################################
+FROM centos:centos7
+MAINTAINER gardar@ok.is
 
-FROM centos:latest
-MAINTAINER "Gardar Thorsteinsson" <gardart@gmail.com>
+# - Install basic packages (e.g. python-setuptools is required to have python's easy_install)
+# - Install yum-utils so we have yum-config-manager tool available
+# - Install inotify, needed to automate daemon restarts after config file changes
+# - Install jq, small library for handling JSON files/api from CLI
+# - Install supervisord (via python's easy_install - as it has the newest 3.x version)
+RUN \
+  yum update -y && \
+  yum install -y epel-release && \
+  yum install -y iproute python-setuptools hostname inotify-tools yum-utils which jq && \
+  yum clean all && \
+
+  easy_install supervisor
+
 
 ENV ADAGIOS_HOST adagios.local
 ENV ADAGIOS_USER thrukadmin
@@ -13,155 +22,81 @@ ENV ADAGIOS_PASS thrukadmin
 # First install the opensource.is and consol labs repositories
 RUN rpm -ihv http://opensource.is/repo/ok-release.rpm
 RUN rpm -Uvh https://labs.consol.de/repo/stable/rhel7/x86_64/labs-consol-stable.rhel7.noarch.rpm
-RUN yum update -y ok-release
-
-# Redhat/Centos users need to install the epel repositories (fedora users skip this step)
 RUN yum install -y epel-release
-
+RUN yum update -y ok-release
 RUN yum clean all && yum -y update
 
-# Install naemon, adagios and other needed packages
-RUN yum install -y httpd mod_wsgi
-RUN yum install -y naemon naemon-livestatus git acl pnp4nagios python-setuptools postfix python-pip
-RUN yum install -y Django python-simplejson
-RUN yum-config-manager --enable ok-testing -y
-RUN yum install -y okconfig
+#
+# Install Deps          
+#
+RUN yum install -y git acl libstdc++-static python-setuptools facter mod_wsgi postfix python-pip sudo
 
-# Now all the packages have been installed, and we need to do a little bit of
-# configuration before we start doing awesome monitoring
 
-# Lets make sure adagios can write to naemon° configuration files, and that
+# Install Nagios 4
+#
+RUN yum install -y nagios nagios-plugins-all pnp4nagios
+
+#
+# Enable and start services 
+#
+RUN systemctl enable nagios
+RUN chkconfig npcd on
+RUN systemctl enable httpd
+
+#
+# Install Livestatus    
+#
+RUN yum install -y check-mk-livestatus
+# Add check_mk livestatus broker module to nagios config
+RUN echo "broker_module=/usr/lib64/check_mk/livestatus.o /var/spool/nagios/cmd/livestatus" >> /etc/nagios/nagios.cfg
+
+# Lets make sure adagios can write to nagios configuration files, and that
 # it is a valid git repo so we have audit trail
-WORKDIR /etc/naemon
+WORKDIR /etc/nagios
+RUN git init /etc/nagios/
+RUN git config user.name "User"
+RUN git config user.email "email@mail.com"
+RUN git add *
+RUN git commit -m "Initial commit"
 
-# Fix permissions for naemon and pnp4nagios
-RUN chown -R naemon:naemon /etc/naemon /var/lib/pnp4nagios /var/log/pnp4nagios /var/spool/pnp4nagios /etc/pnp4nagios/process_perfdata.cfg
-# ACL group permissions need g+rwx
-RUN chmod g+rwx -R /etc/naemon /var/lib/pnp4nagios /var/log/pnp4nagios /var/spool/pnp4nagios /etc/pnp4nagios/process_perfdata.cfg
-RUN setfacl -R -m group:naemon:rwx -m d:group:naemon:rwx /etc/naemon/ /var/lib/pnp4nagios  /var/log/pnp4nagios /var/spool/pnp4nagios /etc/pnp4nagios/process_perfdata.cfg
-
-# Make sure nagios doesn't interfere
-RUN mkdir /etc/nagios/disabled
-RUN mv /etc/nagios/{nagios,cgi}.cfg /etc/nagios/disabled/
+# Make sure nagios group will always have write access to the configuration files:
+RUN chown -R nagios:nagios /etc/nagios/* /etc/nagios/.git
 
 # Install Pynag from Git
-WORKDIR /~
-RUN git clone git://github.com/pynag/pynag.git /tmp/pynag
-WORKDIR /tmp/pynag
-RUN /tmp/pynag/setup.py build
-RUN /tmp/pynag/setup.py install
+RUN mkdir -p /opt/pynag
+WORKDIR /opt/
+RUN pip install django==1.6
+RUN pip install simplejson
+RUN git clone git://github.com/pynag/pynag.git
 
 # Install Adagios from Git
-RUN git clone git://github.com/opinkerfi/adagios.git /tmp/adagios
-WORKDIR /tmp/adagios
-RUN python /tmp/adagios/setup.py install
-RUN cp -r adagios/etc/adagios /etc/adagios
-RUN chown -R naemon:naemon /etc/adagios
+RUN mkdir -p /opt/adagios
+WORKDIR /opt
+RUN git clone git://github.com/opinkerfi/adagios.git
+WORKDIR /opt/adagios/adagios
+RUN cp -r etc/adagios /etc/adagios
+RUN chown -R nagios:nagios /etc/adagios
 RUN chmod g+w -R /etc/adagios
-RUN mkdir /var/lib/adagios
-RUN chown naemon:naemon /var/lib/adagios
-RUN cp -r adagios/apache/* /etc/httpd/conf.d/
-RUN mkdir /etc/sudoers.d
-RUN cp adagios/etc/sudoers.d/adagios /etc/sudoers.d/adagios
+RUN mkdir -p /var/lib/adagios/userdata
+RUN chown nagios:nagios /var/lib/adagios
+RUN mkdir /etc/nagios/adagios
 
-# Make objects created by adagios go to /etc/naemon/adagios
-RUN mkdir -p /etc/naemon/adagios
-RUN pynag config --append cfg_dir=/etc/naemon/adagios
-
-# Make adagios naemon aware
-RUN sed 's|/etc/nagios/passwd|/etc/thruk/htpasswd|g' -i /etc/httpd/conf.d/adagios.conf
-RUN sed 's|user=nagios|user=naemon|g' -i /etc/httpd/conf.d/adagios.conf
-RUN sed 's|group=nagios|group=naemon|g' -i /etc/httpd/conf.d/adagios.conf
-
-RUN sed 's|/etc/nagios/nagios.cfg|/etc/naemon/naemon.cfg|g' -i /etc/adagios/adagios.conf
-RUN sed 's|nagios_url = "/nagios|nagios_url = "/naemon|g' -i /etc/adagios/adagios.conf
-RUN sed 's|/etc/nagios/adagios/|/etc/naemon/adagios/|g' -i /etc/adagios/adagios.conf
-RUN sed 's|/etc/init.d/nagios|/etc/init.d/naemon|g' -i /etc/adagios/adagios.conf
-RUN sed 's|nagios_service = "nagios"|nagios_service = "naemon"|g' -i /etc/adagios/adagios.conf
-RUN sed 's|livestatus_path = None|livestatus_path = "/var/cache/naemon/live"|g' -i /etc/adagios/adagios.conf
-RUN sed 's|/usr/sbin/nagios|/usr/bin/naemon|g' -i /etc/adagios/adagios.conf
-
-# Make okconfig naemon aware
-RUN sed 's|/etc/nagios/nagios.cfg|/etc/naemon/naemon.cfg|g' -i /etc/okconfig.conf
-RUN sed 's|/etc/nagios/okconfig/|/etc/naemon/okconfig/|g' -i /etc/okconfig.conf
-RUN sed 's|/etc/nagios/okconfig/examples|/etc/naemon/okconfig/examples|g' -i /etc/okconfig.conf
-
-RUN okconfig init
-RUN okconfig verify
+RUN mkdir -p /etc/nagios/adagios /etc/nagios/commands
+RUN echo "cfg_dir=/etc/nagios/adagios" >> /etc/nagios/nagios.cfg
+RUN echo "cfg_dir=/etc/nagios/commands" >> /etc/nagios/nagios.cfg
 
 # Add naemon to apache group so it has permissions to pnp4nagios's session files
-RUN usermod -G apache naemon
+RUN usermod -G apache nagios
 
-# Allow Adagios to control the service
-RUN sed 's|nagios|naemon|g' -i /etc/sudoers.d/adagios
-RUN sed 's|/usr/sbin/naemon|/usr/bin/naemon|g' -i /etc/sudoers.d/adagios
+#RUN sed -i 's|^\(nagios_init_script\)=\(.*\)$|\1="sudo /usr/bin/nagios-supervisor-wrapper.sh"|g' /etc/adagios/adagios.conf
+#RUN echo "nagios ALL=NOPASSWD: /usr/bin/nagios-supervisor-wrapper.sh" >> /etc/sudoers.d/adagios
 
-# Make naemon use nagios plugins, more people are doing it like that.
-RUN sed -i 's|/usr/lib64/naemon/plugins|/usr/lib64/nagios/plugins|g' /etc/naemon/resource.cfg
-
-# Configure pnp4nagios
-RUN sed -i 's|/etc/nagios/passwd|/etc/thruk/htpasswd|g' /etc/httpd/conf.d/pnp4nagios.conf
-RUN sed -i 's|user = nagios|user = naemon|g' /etc/pnp4nagios/npcd.cfg
-RUN sed -i 's|group = nagios|group = naemon|g' /etc/pnp4nagios/npcd.cfg
-
-# Enable Naemon performance data
-RUN pynag config --set "process_performance_data=1"
-
-# service performance data
-RUN pynag config --set 'service_perfdata_file=/var/lib/naemon/service-perfdata'
-RUN pynag config --set 'service_perfdata_file_template=DATATYPE::SERVICEPERFDATA\tTIMET::$TIMET$\tHOSTNAME::$HOSTNAME$\tSERVICEDESC::$SERVICEDESC$\tSERVICEPERFDATA::$SERVICEPERFDATA$\tSERVICECHECKCOMMAND::$SERVICECHECKCOMMAND$\tHOSTSTATE::$HOSTSTATE$\tHOSTSTATETYPE::$HOSTSTATETYPE$\tSERVICESTATE::$SERVICESTATE$\tSERVICESTATETYPE::$SERVICESTATETYPE$'
-RUN pynag config --set 'service_perfdata_file_mode=a'
-RUN pynag config --set 'service_perfdata_file_processing_interval=15'
-RUN pynag config --set 'service_perfdata_file_processing_command=process-service-perfdata-file'
-
-# host performance data
-RUN pynag config --set 'host_perfdata_file=/var/lib/naemon/host-perfdata'
-RUN pynag config --set 'host_perfdata_file_template=DATATYPE::HOSTPERFDATA\tTIMET::$TIMET$\tHOSTNAME::$HOSTNAME$\tHOSTPERFDATA::$HOSTPERFDATA$\tHOSTCHECKCOMMAND::$HOSTCHECKCOMMAND$\tHOSTSTATE::$HOSTSTATE$\tHOSTSTATETYPE::$HOSTSTATETYPE$'
-RUN pynag config --set 'host_perfdata_file_mode=a'
-RUN pynag config --set 'host_perfdata_file_processing_interval=15'
-RUN pynag config --set 'host_perfdata_file_processing_command=process-host-perfdata-file'
-
-RUN pynag add command command_name=process-service-perfdata-file command_line='/bin/mv /var/lib/naemon/service-perfdata /var/spool/pnp4nagios/service-perfdata.$TIMET$'
-RUN pynag add command command_name=process-host-perfdata-file command_line='/bin/mv /var/lib/naemon/host-perfdata /var/spool/pnp4nagios/host-perfdata.$TIMET$'
-
-RUN pynag config --append cfg_dir=/etc/naemon/commands/
-
-RUN mv /etc/httpd/conf.d/thruk_cookie_auth_vhost.conf /etc/httpd/conf.d/thruk_cookie_auth_vhost.conf.disabled
-
-# Redirect root URL to /adagios
-RUN echo "RedirectMatch ^/$ /adagios" > /etc/httpd/conf.d/redirect.conf
-
-# Install supervisor and supervisor-quick. Service restarts are painfully slow
-# otherwise
-RUN pip install supervisor
-RUN pip install supervisor-quick
-
-# Remove cache and default passwd files
-RUN rm -rf /var/cache/yum /etc/nagios/passwd /etc/thruk/htpasswd
-
-# Copy supervisor config over to the container
-COPY supervisord.conf /etc/supervisord.conf
-
-# Copy custom supervisor init.d script (for nagios start|stop)
-COPY naemon-supervisor-wrapper.sh /usr/bin/naemon-supervisor-wrapper.sh
-RUN sed -i 's|^\(nagios_init_script\)=\(.*\)$|\1="sudo /usr/bin/naemon-supervisor-wrapper.sh"|g' /etc/adagios/adagios.conf
-RUN echo "naemon ALL=NOPASSWD: /usr/bin/naemon-supervisor-wrapper.sh" >> /etc/sudoers
-
-# Create childlogdir
-RUN mkdir /var/log/supervisor
-
-# Copy over our custom init script
-COPY run.sh /usr/bin/run.sh
-
-# Make run.sh and supervisor wrapper script executable
-RUN chmod 755 /usr/bin/run.sh /usr/bin/naemon-supervisor-wrapper.sh
-
-WORKDIR /etc/naemon
-
-ENTRYPOINT ["/bin/bash", "/usr/bin/run.sh"]
+# Add supervisord conf, bootstrap.sh files
+ADD container-files /
+ADD supervisord-nagios.conf /etc/supervisor.d/supervisord-nagios.conf
 
 EXPOSE 80
-EXPOSE 81
+EXPOSE 8000
+VOLUME ["/data", "/etc/nagios", "/var/log/nagios", "/etc/adagios", "/opt/adagios", "/opt/pynag"]
 
-VOLUME ["/etc/naemon", "/var/log/naemon"]
-CMD ["/usr/sbin/init"]
+ENTRYPOINT ["/config/bootstrap.sh"]
