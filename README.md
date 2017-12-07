@@ -1,5 +1,5 @@
 # docker-adagios-git
-Docker image for Adagios built from git (Naemon-Adagios)
+Docker image for Adagios built from git (Nagios 4-Adagios)
 
 [![Docker Stars](https://img.shields.io/docker/stars/opinkerfi/adagios-git.svg)]()
 [![Docker Pulls](https://img.shields.io/docker/pulls/opinkerfi/adagios-git.svg)]()
