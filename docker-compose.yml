@@ -9,10 +9,8 @@ services:
       - adagios:/opt/adagios
       - pynag:/opt/pynag
       - logs:/var/log/nagios
-      - nagios:/etc/nagios
 
 volumes:
   adagios:
   pynag:
   logs:
-  nagios:
