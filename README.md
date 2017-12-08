@@ -42,7 +42,6 @@ To access Nagios 4 UI
 docker run -it -p 8080:80 \
 -v ~/code/adagios:/opt/adagios \
 -v ~/code/pynag:/opt/pynag \
--v ~/code/nagios:/etc/nagios \
 -v ~/code/logs:/var/log/nagios \
 --name adagios opinkerfi/adagios-git:latest
 ```
@@ -64,13 +63,11 @@ services:
     volumes:
       - adagios:/opt/adagios
       - pynag:/opt/pynag
-      - nagios:/etc/nagios
       - logs:/var/log/nagios
 
 volumes:
   adagios:
   pynag:
-  nagios:
   logs:
 
 ```
