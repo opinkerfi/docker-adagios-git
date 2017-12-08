@@ -40,9 +40,10 @@ To access Nagios 4 UI
 
 ```SHELL
 docker run -it -p 8080:80 \
--v ~/code/test/adagios:/opt/adagios \
--v ~/code/test/pynag:/opt/pynag \
--v ~/code/test/logs:/var/log/nagios \
+-v ~/code/adagios:/opt/adagios \
+-v ~/code/pynag:/opt/pynag \
+-v ~/code/nagios:/etc/nagios \
+-v ~/code/logs:/var/log/nagios \
 --name adagios opinkerfi/adagios-git:latest
 ```
 ### Via docker-compose
@@ -63,14 +64,14 @@ services:
     volumes:
       - adagios:/opt/adagios
       - pynag:/opt/pynag
-      - logs:/var/log/nagios
       - nagios:/etc/nagios
+      - logs:/var/log/nagios
 
 volumes:
   adagios:
   pynag:
-  logs:
   nagios:
+  logs:
 
 ```
 
