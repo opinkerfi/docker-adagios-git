@@ -81,5 +81,5 @@ We have created a small script that you can use to setup the local development e
 
 ```SHELL
 cd ~/my/adagios/env/dev/folder # Folder that you want to keep the code for pynag and adagios
-curl https://raw.githubusercontent.com/opinkerfi/docker-adagios-git/master/setup_dev_env.sh | bash - 
+bash -c "$(curl -L https://raw.githubusercontent.com/opinkerfi/docker-adagios-git/master/setup_dev_env.sh)"
 ```
