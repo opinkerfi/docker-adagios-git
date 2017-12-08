@@ -5,13 +5,14 @@ services:
     image: opinkerfi/adagios-git:latest
     ports:
       - 8080:80
-      - 8000:8000
     volumes:
       - adagios:/opt/adagios
       - pynag:/opt/pynag
       - logs:/var/log/nagios
+      - nagios:/etc/nagios
 
 volumes:
   adagios:
   pynag:
   logs:
+  nagios:
