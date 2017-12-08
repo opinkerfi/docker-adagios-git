@@ -26,7 +26,6 @@ So -p 8080:80 would expose port 80 from inside the container to be accessible fr
 http://192.168.x.x:8080 would show you what's running INSIDE the container on port 80.
 
 * `-p 80` - Port for Adagios webui
-* `-p 8000` - Port for Adagios Django developement server
 
 For shell access whilst the container is running do `docker exec -it my-adagios /bin/bash`.
 
@@ -40,7 +39,7 @@ To access Nagios 4 UI
 ### Via docker run command
 
 ```SHELL
-docker run -it -p 8080:80 -p 8000:8000 \
+docker run -it -p 8080:80 \
 -v ~/code/test/adagios:/opt/adagios \
 -v ~/code/test/pynag:/opt/pynag \
 -v ~/code/test/logs:/var/log/nagios \
@@ -61,16 +60,17 @@ services:
     image: opinkerfi/adagios-git:latest
     ports:
       - 8080:80
-      - 8000:8000
     volumes:
       - adagios:/opt/adagios
       - pynag:/opt/pynag
       - logs:/var/log/nagios
+      - nagios:/etc/nagios
 
 volumes:
   adagios:
   pynag:
   logs:
+  nagios:
 
 ```
 
