@@ -80,3 +80,12 @@ We have created a small script that you can use to setup the local development e
 cd ~/my/adagios/env/dev/folder # Folder that you want to keep the code for pynag and adagios
 bash -c "$(curl -L https://raw.githubusercontent.com/opinkerfi/docker-adagios-git/master/setup_dev_env.sh)"
 ```
+To access your Adagios development container, direct your browser to http://0.0.0.0:8080
+Now do some changes with your Adagios or Pynag code inside your local volumes that you created before and restart your container.
+
+```SHELL
+docker-compose restart
+```
+When the container restarts it will install Adagios and Pynag from your local volumes.
+Your new code changes should now reflect on your Adagios developement container.
+
