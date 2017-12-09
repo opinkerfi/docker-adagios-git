@@ -61,9 +61,9 @@ services:
     ports:
       - 8080:80
     volumes:
-      - adagios:/opt/adagios
-      - pynag:/opt/pynag
-      - logs:/var/log/nagios
+      - ./adagios:/opt/adagios
+      - ./pynag:/opt/pynag
+      - ./logs:/var/log/nagios
 
 volumes:
   adagios:
