@@ -48,6 +48,12 @@ RUN yum install -y check-mk-livestatus
 # Add check_mk livestatus broker module to nagios config
 RUN echo "broker_module=/usr/lib64/check_mk/livestatus.o /var/spool/nagios/cmd/livestatus debug=1" >> /etc/nagios/nagios.cfg
 
+#
+# Install Remote Livestatus service
+# Needs livestatus xinetd config below
+#
+RUN yum install -y xinetd
+
 # Lets make sure adagios can write to nagios configuration files, and that
 # it is a valid git repo so we have audit trail
 WORKDIR /etc/nagios
@@ -98,6 +104,9 @@ ADD container-files /
 ADD supervisord-nagios.conf /etc/supervisor.d/supervisord-nagios.conf
 
 EXPOSE 80
+# Livestatus remote service
+EXPOSE 6557
+
 VOLUME ["/data", "/etc/nagios", "/var/log/nagios", "/etc/adagios", "/opt/adagios", "/opt/pynag"]
 
 ENTRYPOINT ["/config/bootstrap.sh"]
