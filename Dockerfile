@@ -53,6 +53,7 @@ RUN echo "broker_module=/usr/lib64/check_mk/livestatus.o /var/spool/nagios/cmd/l
 # Needs livestatus xinetd config below
 #
 RUN yum install -y xinetd
+ADD container-files/etc/xinetd.d/livestatus /etc/xinetd.d/livestatus
 
 # Lets make sure adagios can write to nagios configuration files, and that
 # it is a valid git repo so we have audit trail
