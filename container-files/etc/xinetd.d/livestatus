@@ -1,0 +1,31 @@
+service livestatus
+{
+    type        = UNLISTED
+    socket_type = stream
+    protocol    = tcp
+    wait        = no
+
+    # limit to 100 connections per second. Disable 3 secs if above.
+    cps             = 1000 3
+
+    # set the number of maximum allowed parallel instances of unixcat.
+    instances       = 500
+
+    # limit the maximum number of simultaneous connections from
+    # one source IP address
+    per_source      = 500
+
+    # Disable TCP delay, makes connection more responsive
+    flags           = NODELAY
+
+    # Disable this services
+    disable     = no
+
+    # TCP port number.
+    port        = 6557
+
+    # Paths and users.
+    user        = nagios
+    server      = /usr/bin/unixcat
+    server_args = /var/spool/nagios/cmd/livestatus
+}
