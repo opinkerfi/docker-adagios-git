@@ -9,7 +9,7 @@ MAINTAINER gardar@ok.is
 RUN \
   yum update -y && \
   yum install -y epel-release && \
-  yum install -y iproute python-setuptools hostname inotify-tools yum-utils which jq && \
+  yum install -y iproute python-setuptools hostname inotify-tools yum-utils which jq top && \
   yum clean all && \
   easy_install supervisor
 
