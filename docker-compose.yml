@@ -6,11 +6,13 @@ services:
     ports:
       - 8080:80
     volumes:
-      - ./adagios:/opt/adagios
-      - ./pynag:/opt/pynag
-      - ./logs:/var/log/nagios
+      - ./adagios:/opt
+      - ./pynag:/opt
+      - ./logs:/var/log
+      - ./log/httpd:/etc/httpd/logs
 
 volumes:
   adagios:
   pynag:
   logs:
+  httpd:
