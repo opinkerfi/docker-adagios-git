@@ -11,7 +11,7 @@ The image has Adagios running with Nagios 4, PNP4Nagios and Livestatus.
  
 
 ```
-docker create \ 
+docker create \
   --name=my-adagios \
   -p 80:80 \
   opinkerfi/adagios-git
