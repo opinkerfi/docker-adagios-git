@@ -4,7 +4,6 @@
 ############################################################
 
 FROM centos:7
-MAINTAINER "Gardar Thorsteinsson" <gardart@gmail.com>
 #LABEL com.example.version="0.0.1-beta"
 LABEL vendor1="Opin Kerfi hf."
 #LABEL com.example.release-date="2019-11-14"
@@ -213,9 +212,9 @@ RUN python setup.py build ;\
 	python setup.py install
 
 # Start Adagios development server
-WORKDIR /opt/adagios/adagios
-RUN python manage.py migrate ;\
-	manage.py runserver 0.0.0.0:8080
+#WORKDIR /opt/adagios/adagios
+#RUN python manage.py migrate ;\
+#RUN	python manage.py runserver 0.0.0.0:8080
 
 # Enable services
 RUN systemctl enable httpd naemon npcd
@@ -231,4 +230,4 @@ EXPOSE 8080
 VOLUME ["/etc/naemon", "/var/log/naemon"]
 CMD ["/usr/sbin/init"]
 
-HEALTHCHECK --interval=2m --timeout=3s CMD curl -f http://localhost:80/ || exit 1
+#HEALTHCHECK --interval=2m --timeout=3s CMD curl -f http://localhost:80/ || exit 1
